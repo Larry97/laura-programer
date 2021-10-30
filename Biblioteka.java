@@ -168,7 +168,7 @@ public class Biblioteka {
 				pozicija = idKnjiga.indexOf(brojKnjige);
 				//ako postoji sa tim brojem knjige, ispisemo podatke
 				if(pozicija != -1 ) {
-					System.out.printf("%10s %10s %10s \n", idKnjiga.get(pozicija), 
+					System.out.printf("%10s %15s %10s \n", idKnjiga.get(pozicija), 
 					naslovi.get(pozicija), autori.get(pozicija));
 			}
 			else
@@ -178,7 +178,7 @@ public class Biblioteka {
 			case "7": //Prikaz svih knjiga
 				for (int i = 0; i < idKnjiga.size(); i++) {
 					//10 mesta za imena i 5 mesta prosek odvojimo da bi podaci bili poravnati
-					System.out.printf("%10s %10s %10s \n", idKnjiga.get(i), 
+					System.out.printf("%10s %15s %10s \n", idKnjiga.get(i), 
 					naslovi.get(i), autori.get(i));
 				}
 			break;
