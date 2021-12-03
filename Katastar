@@ -1,0 +1,213 @@
+package Vezbe02;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Katastar {
+
+	private ArrayList<Nepokretnost> kolekcijaNepokretnosti = new ArrayList<Nepokretnost>();
+	private String naziv;
+	private String adresa;
+	
+	public Katastar() {
+		
+		this.naziv = "";
+		this.adresa = "";
+	}
+	
+	public Katastar(String naziv, String adresa) {
+		this.naziv = naziv;
+		this.adresa = adresa;
+	}
+
+	public ArrayList<Nepokretnost> getKolekcijaNepokretnosti() {
+		return kolekcijaNepokretnosti;
+	}
+
+	public void setKolekcijaNepokretnosti(ArrayList<Nepokretnost> kolekcijaNepokretnosti) {
+		this.kolekcijaNepokretnosti = kolekcijaNepokretnosti;
+	}
+
+	public String getNaziv() {
+		return naziv;
+	}
+
+	public void setNaziv(String naziv) {
+		this.naziv = naziv;
+	}
+
+	public String getAdresa() {
+		return adresa;
+	}
+
+	public void setAdresa(String adresa) {
+		this.adresa = adresa;
+	}
+	
+	public void ispisiNepokretnosti() {
+		
+		System.out.printf("%15s %15s %15s %15s %15s %15s\n", "Identifikator", "Vlasnik", "Povrsina", "Broj parcele",
+						"Ulica", "Datum izmene");
+		if(this.kolekcijaNepokretnosti.isEmpty()) {
+			System.out.println("Trenutno nema zavedenih nepokretnosti.");
+		}
+		for (int i = 0; i < this.kolekcijaNepokretnosti.size(); i++) {
+			System.out.println(this.kolekcijaNepokretnosti.get(i));
+		}
+	}
+	
+	public boolean dodajNepokretnost(Nepokretnost novaNepokretnost) {
+		for (int i = 0; i < this.kolekcijaNepokretnosti.size(); i++) {
+			if (this.kolekcijaNepokretnosti.get(i).getIdentifikator() == 
+					novaNepokretnost.getIdentifikator()) {
+				System.out.println("Nepokretnost vec postoji.");
+				return false;
+			}
+		}
+		this.kolekcijaNepokretnosti.add(novaNepokretnost);
+		return true;
+	}
+	
+	public boolean izmeniNepokretnost(Nepokretnost izmenjenaNepokretnost) {
+		for (int i = 0; i < this.kolekcijaNepokretnosti.size(); i++) {
+			if(this.kolekcijaNepokretnosti.get(i).getIdentifikator() == 
+					izmenjenaNepokretnost.getIdentifikator()) {
+				this.kolekcijaNepokretnosti.set(i, izmenjenaNepokretnost);
+			System.out.println("Uspesna izmena.");
+			return true;
+			}
+		}
+		System.out.println("Nepokretnost ne postoji.");
+		return false;
+	}
+	
+	public boolean obrisiNepokretnost(int identifikator) {
+		for (int i = 0; i < this.kolekcijaNepokretnosti.size(); i++) {
+			if (this.kolekcijaNepokretnosti.get(i).getIdentifikator() == identifikator) {
+				this.kolekcijaNepokretnosti.remove(i);
+				System.out.println("Uspesno brisanje.");
+				return true;
+			}
+		}
+		System.out.println("Nepokretnost nepostoji.");
+		return false;
+	}
+	
+	public void pretragaPoKorisniku(String korisnik) {
+		boolean pronadjena = false;
+		for (int i = 0; i < this.kolekcijaNepokretnosti.size(); i++) {
+			if (this.kolekcijaNepokretnosti.get(i).getNazivVlasnika().equalsIgnoreCase(korisnik)) {
+				System.out.println("Nepokretnost pronadjena " + this.kolekcijaNepokretnosti.get(i));
+				pronadjena = true;
+			}
+		}
+		if(!pronadjena) {
+			System.out.println("Korisnik nema nepokretnosti.");
+		}
+	}
+	//pretraga i ispis po katastarskoj parceli i prosecnoj (min i max) povrsini
+	public void pretragaPoParceli(String brojParcele, Double minPovrsina, Double maxPovrsina) {
+		ArrayList<Nepokretnost> pronadjeneNepokretnosti = new ArrayList<Nepokretnost>();
+		
+		for (int i = 0; i < this.kolekcijaNepokretnosti.size(); i++) {
+			if (this.kolekcijaNepokretnosti.get(i).getBrojParcele().equals(brojParcele) && 
+					this.kolekcijaNepokretnosti.get(i).getPovrsina() >= minPovrsina && 
+					this.kolekcijaNepokretnosti.get(i).getPovrsina() <= maxPovrsina) {
+				pronadjeneNepokretnosti.add(this.kolekcijaNepokretnosti.get(i));
+				System.out.println("Nepokretnosti koje se nalaze na katastarskoj parceli i imaju"
+						+ " povrsinu u navedenom opsegu: " + this.kolekcijaNepokretnosti.get(i));
+			}
+		}
+		if (pronadjeneNepokretnosti.isEmpty()) {
+			System.out.println("Nije moguce naci nepokretnost.");
+			
+		}
+	}
+	
+	public void save(String path) {
+		ArrayList<String> lines = new ArrayList<String>();
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+		
+		lines.add(this.naziv);
+		lines.add(this.adresa);
+		for (int i = 0; i < this.kolekcijaNepokretnosti.size(); i++) {
+			Nepokretnost nepokretnost = this.kolekcijaNepokretnosti.get(i);
+			int identifikator = nepokretnost.getIdentifikator();
+			String nazivVlasnika = nepokretnost.getNazivVlasnika();
+			double povrsina = nepokretnost.getPovrsina();
+			String brojParcele = nepokretnost.getBrojParcele();
+			String ulica = nepokretnost.getUlica();
+			
+			String formatiranDatum = dtf.format(nepokretnost.getDatum());
+			String line = identifikator + ";" + nazivVlasnika + ";" + povrsina + ";" + brojParcele
+					+ ";" + ulica + ";" + formatiranDatum;
+			lines.add(line);	
+		}
+		
+		try {
+			Files.write(Paths.get(path), lines, Charset.defaultCharset(), StandardOpenOption.CREATE,
+					StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+		} catch (IOException e) {
+			System.out.println("Desila se greska prilikom cuvanja podataka.");
+		//	e.printStackTrace();
+		}
+		
+	}
+	
+	public void load(String path) {
+		this.kolekcijaNepokretnosti = new ArrayList<Nepokretnost>();
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+		List<String> lines;
+		
+		try {
+			lines = Files.readAllLines(Paths.get(path), Charset.defaultCharset());
+			this.naziv = lines.get(0);
+			this.adresa = lines.get(1);
+			
+			for (int i = 2; i < lines.size(); i++) {
+				String[] attributes = lines.get(i).split(";");
+				int identifikator = Integer.parseInt(attributes[0]);
+				String nazivVlasnika = attributes[1];
+				double povrsina = Double.parseDouble(attributes[2]);
+				String brojParcele = attributes[3];
+				String ulica = attributes[4];
+				LocalDate datumStr = LocalDate.parse(attributes[5],dtf);
+				
+				Nepokretnost nepokretnost = new Nepokretnost(identifikator, nazivVlasnika, povrsina, 
+						brojParcele, ulica, datumStr);
+				this.kolekcijaNepokretnosti.add(nepokretnost);
+			}
+			
+		} catch (IOException e) {
+			System.out.println("Desila se greska prilikom citanja fajla.");
+		//	e.printStackTrace();
+		} catch (NumberFormatException e) {
+			System.out.println("Desila se greska prilikom konverzije brojeva.");
+		} catch (DateTimeParseException e) {
+			System.out.println("Desila se greska prilikom konverzije datuma.");
+		} catch (Exception e) {
+			System.out.println("Desila se nepredvidjena greska.");
+		}
+		
+		}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Naziv: " + this.naziv + "\n");
+		sb.append("Adresa: " + this.adresa + "\n");
+		for(int i = 0; i < this.kolekcijaNepokretnosti.size(); i++)
+			sb.append((this.kolekcijaNepokretnosti.get(i)));
+		return sb.toString().trim();
+	}
+	
+	
+}
